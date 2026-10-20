@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>국방예산 중점사업 & 신규사업 대시보드</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <!-- App Header -->
+  <header class="app-header">
+    <div class="header-inner">
+      <div class="brand-section">
+        <div class="brand-icon">🛡️</div>
+        <div class="brand-titles">
+          <h1>국방예산 중점사업 분석 대시보드</h1>
+          <p>분야별(중점영역) 및 신규사업별 예산 편성·증감 현황 인터랙티브 분석 플랫폼</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button id="btn-open-upload" class="btn btn-primary">
+          <span>📁</span>
+          <span>엑셀 / CSV 업로드</span>
+        </button>
+        <a href="2027년_국방예산_샘플.xlsx" download="2027년_국방예산_샘플.xlsx" class="btn btn-secondary">
+          <span>📊</span>
+          <span>샘플 엑셀</span>
+        </a>
+        <a href="sample_data.csv" download="2027년_국방예산_샘플.csv" class="btn btn-secondary">
+          <span>📥</span>
+          <span>샘플 CSV</span>
+        </a>
+        <button id="btn-reset-data" class="btn btn-secondary" title="초기 데이터로 되돌리기">
+          <span>🔄</span>
+          <span>기본데이터 복원</span>
+        </button>
+        <button id="btn-print" class="btn btn-secondary" title="보고서 인쇄 또는 PDF 저장">
+          <span>🖨️</span>
+          <span>보고서 인쇄</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Status Bar -->
+  <section class="status-bar">
+    <div class="status-bar-inner">
+      <div>
+        <span>데이터 소스: </span>
+        <span id="status-source-text" class="status-pill">기본 데이터 (2027년 국방예산 정부안)</span>
+      </div>
+      <div style="font-size:0.8rem; color:#64748b;">
+        <span>단위: <strong>억원</strong> (별도 표기 외) | 지원 형식: <strong>Excel (.xlsx, .xls), CSV</strong></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Container -->
+  <main class="app-container">
+
+    <!-- KPI Top Cards -->
+    <section class="kpi-grid">
+      <div class="kpi-card kpi-primary">
+        <div class="kpi-header">
+          <span class="kpi-title">2027년 정부안 총 규모</span>
+          <span class="kpi-icon">💰</span>
+        </div>
+        <div class="kpi-value-row">
+          <span id="kpi-total-curr" class="kpi-value">-</span>
+          <span class="kpi-unit">억원</span>
+        </div>
+        <div class="kpi-footer">
+          <span>전년: <strong id="kpi-total-prev">-</strong> 억원</span>
+        </div>
+      </div>
+
+      <div class="kpi-card kpi-success">
+        <div class="kpi-header">
+          <span class="kpi-title">전년 대비 순증액</span>
+          <span class="kpi-icon">📈</span>
+        </div>
+        <div class="kpi-value-row">
+          <span id="kpi-total-diff" class="kpi-value" style="color:#059669;">-</span>
+          <span class="kpi-unit">억원</span>
+        </div>
+        <div class="kpi-footer">
+          <span>총 증가율: <strong id="kpi-total-rate" class="badge-tag badge-increase">-</strong></span>
+        </div>
+      </div>
+
+      <div class="kpi-card kpi-accent">
+        <div class="kpi-header">
+          <span class="kpi-title">신규 추진 사업 건수</span>
+          <span class="kpi-icon">🚀</span>
+        </div>
+        <div class="kpi-value-row">
+          <span id="kpi-new-count" class="kpi-value" style="color:#7c3aed;">-</span>
+          <span class="kpi-unit">개 신규사업</span>
+        </div>
+        <div class="kpi-footer">
+          <span>신규 편성 총액: <strong id="kpi-new-sum">-</strong> 억원</span>
+        </div>
+      </div>
+
+      <div class="kpi-card kpi-info">
+        <div class="kpi-header">
+          <span class="kpi-title">중점 분석 분야</span>
+          <span class="kpi-icon">🏛️</span>
+        </div>
+        <div class="kpi-value-row">
+          <span id="badge-tab-sector" class="kpi-value" style="color:#0284c7;">-</span>
+          <span class="kpi-unit">개 중점영역</span>
+        </div>
+        <div class="kpi-footer">
+          <span>총 세부사업: <strong id="badge-tab-all">-</strong> 건</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Navigation Tabs -->
+    <nav class="tabs-nav">
+      <button class="tab-btn active" data-tab="overview">
+        <span>📊</span>
+        <span>종합 개요 대시보드</span>
+      </button>
+      <button class="tab-btn" data-tab="sector">
+        <span>🏛️</span>
+        <span>분야별(중점영역) 심층 분석</span>
+      </button>
+      <button class="tab-btn" data-tab="newProjects">
+        <span>🚀</span>
+        <span>신규사업 집중 분석</span>
+        <span id="badge-tab-new" class="tab-badge">0</span>
+      </button>
+      <button class="tab-btn" data-tab="table">
+        <span>📋</span>
+        <span>상세 데이터 탐색기</span>
+      </button>
+    </nav>
+
+    <!-- TAB 1: OVERVIEW -->
+    <div id="tab-panel-overview" class="tab-content-panel">
+      <!-- Strategy Highlights -->
+      <div class="panel-card" style="margin-bottom: 1.5rem; background: linear-gradient(135deg, #f8fafc 0%, #eff6ff 100%);">
+        <div class="panel-title-bar" style="border-bottom:none; margin-bottom:0.75rem; padding-bottom:0;">
+          <h3 class="panel-title">💡 2027년 국방예산 주요 편성 방향 및 정책적 핵심 시사점</h3>
+        </div>
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem;">
+          <div style="background:#ffffff; padding:0.85rem 1rem; border-radius:var(--radius-sm); border-left:4px solid #1e3a8a;">
+            <strong style="color:#1e3a8a;">전작권 전환 & 자주국방 투자 집중</strong>
+            <p style="font-size:0.825rem; color:#475569; margin-top:0.25rem;">핵심 전력 확보에 12조 1,744억원 편성 (+31,522억, +34.9% 증액). KF-21 양산, 핵추진잠수함 착수, L-SAM 조기 확보 주도.</p>
+          </div>
+          <div style="background:#ffffff; padding:0.85rem 1rem; border-radius:var(--radius-sm); border-left:4px solid #7c3aed;">
+            <strong style="color:#7c3aed;">AI·유무인 복합체계(MUM-T) 전환</strong>
+            <p style="font-size:0.825rem; color:#475569; margin-top:0.25rem;">총예산 7,727억원(+55.5%) 및 피지컬 AI 실증(신규 430억), 드론전사 50만 양성(771억, +160.5%) 등 미래전 역량 쇄신.</p>
+          </div>
+          <div style="background:#ffffff; padding:0.85rem 1rem; border-radius:var(--radius-sm); border-left:4px solid #d97706;">
+            <strong style="color:#d97706;">장병 복무여건 및 초급간부 처우 혁신</strong>
+            <p style="font-size:0.825rem; color:#475569; margin-top:0.25rem;">부사관 장려금 1,152억(+116.7%), 적금매칭(신규 189억), 숙소 전세금 신설, 병사 단체상해보험(신규 69억) 도입.</p>
+          </div>
+          <div style="background:#ffffff; padding:0.85rem 1rem; border-radius:var(--radius-sm); border-left:4px solid #059669;">
+            <strong style="color:#059669;">미래 국방기술 주권 R&D 확대</strong>
+            <p style="font-size:0.825rem; color:#475569; margin-top:0.25rem;">국방반도체 R&D 565억(+328%), 한국형 항공엔진(신규 90억), 레이저 하드킬(신규 121억) 등 핵심 전략무기 국산화 착수.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Charts Row 1 -->
+      <div class="dashboard-grid">
+        <div class="panel-card col-6">
+          <div class="panel-title-bar">
+            <h3 class="panel-title">분야별 2027년 예산 배분 비중</h3>
+            <span class="panel-subtitle">정부안 기준</span>
+          </div>
+          <div class="chart-wrapper">
+            <canvas id="chart-overview-sector-donut"></canvas>
+          </div>
+        </div>
+
+        <div class="panel-card col-6">
+          <div class="panel-title-bar">
+            <h3 class="panel-title">전년(2026) vs 당해(2027) 분야별 예산 비교</h3>
+            <span class="panel-subtitle">단위: 억원</span>
+          </div>
+          <div class="chart-wrapper">
+            <canvas id="chart-overview-yoy-bar"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Charts Row 2 -->
+      <div class="dashboard-grid">
+        <div class="panel-card col-12">
+          <div class="panel-title-bar">
+            <h3 class="panel-title">예산 증감액(+ 순증) 상위 사업 TOP 6</h3>
+            <span class="panel-subtitle">가장 많은 예산이 순증된 핵심 사업 순위</span>
+          </div>
+          <div class="chart-wrapper" style="min-height: 280px;">
+            <canvas id="chart-top-diff"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Overview Sector Table -->
+      <div class="panel-card">
+        <div class="panel-title-bar">
+          <h3 class="panel-title">분야별 예산 편성 종합 일람</h3>
+          <span class="panel-subtitle">중점영역별 2026년 대비 2027년 증감 내역</span>
+        </div>
+        <div class="table-responsive-box">
+          <table class="analytics-table">
+            <thead>
+              <tr>
+                <th>분야 (중점영역)</th>
+                <th class="text-right">2026년 (A)</th>
+                <th class="text-right">2027년 정부안 (B)</th>
+                <th class="text-right">증감액 (B-A)</th>
+                <th class="text-center">증가율</th>
+                <th class="text-center">사업수</th>
+                <th class="text-right">예산 점유율</th>
+              </tr>
+            </thead>
+            <tbody id="overview-sector-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: SECTOR DEEP DIVE -->
+    <div id="tab-panel-sector" class="tab-content-panel" style="display:none;">
+      <!-- Sector Selector Chips -->
+      <div class="sector-selector-bar">
+        <div style="font-weight:700; font-size:0.875rem; color:#475569; display:flex; align-items:center; margin-right:0.5rem;">
+          분야 선택:
+        </div>
+        <div id="sector-chips-container" style="display:flex; gap:0.5rem; flex-wrap:wrap;"></div>
+      </div>
+
+      <!-- Selected Sector Summary Banner -->
+      <div class="panel-card" style="margin-bottom:1.5rem; background:#ffffff; border-top:4px solid #1e3a8a;">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; margin-bottom:1rem;">
+          <div>
+            <span class="badge-tag badge-neutral" style="margin-bottom:0.25rem;">선택된 중점영역</span>
+            <h2 id="sec-title" style="font-size:1.4rem; font-weight:800; color:#1e3a8a;">-</h2>
+          </div>
+          <div style="display:flex; gap:1.5rem; flex-wrap:wrap;">
+            <div>
+              <div style="font-size:0.75rem; color:#64748b;">2027년 총예산</div>
+              <div id="sec-curr-sum" style="font-size:1.35rem; font-weight:800; color:#0f172a;">-</div>
+            </div>
+            <div>
+              <div style="font-size:0.75rem; color:#64748b;">2026년 총예산</div>
+              <div id="sec-prev-sum" style="font-size:1.15rem; font-weight:700; color:#64748b;">-</div>
+            </div>
+            <div>
+              <div style="font-size:0.75rem; color:#64748b;">전년 대비 증감</div>
+              <div id="sec-diff-sum" style="font-size:1.15rem; font-weight:700; color:#059669;">-</div>
+            </div>
+            <div>
+              <div style="font-size:0.75rem; color:#64748b;">분야 증가율</div>
+              <div id="sec-rate" style="font-size:1.15rem; font-weight:700; color:#1e40af;">-</div>
+            </div>
+            <div>
+              <div style="font-size:0.75rem; color:#64748b;">소속 사업 수</div>
+              <div id="sec-project-count" style="font-size:1.15rem; font-weight:700; color:#475569;">-</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Selected Sector Chart -->
+        <div class="chart-wrapper" style="min-height:260px; max-height:300px; margin-top:0.5rem;">
+          <canvas id="chart-sector-projects"></canvas>
+        </div>
+      </div>
+
+      <!-- Selected Sector Project Cards Grid -->
+      <h3 style="font-size:1.1rem; font-weight:700; margin-bottom:0.5rem; display:flex; align-items:center; gap:0.5rem;">
+        <span>📌</span>
+        <span>해당 분야 세부 추진 사업 목록</span>
+      </h3>
+      <div id="sector-projects-cards" class="project-cards-grid"></div>
+    </div>
+
+    <!-- TAB 3: NEW PROJECTS FOCUSED HUB -->
+    <div id="tab-panel-newProjects" class="tab-content-panel" style="display:none;">
+      <!-- New Projects Summary Banner -->
+      <div class="kpi-grid">
+        <div class="kpi-card kpi-success">
+          <div class="kpi-header">
+            <span class="kpi-title">2027년 신규 사업 수</span>
+            <span class="kpi-icon">✨</span>
+          </div>
+          <div class="kpi-value-row">
+            <span id="new-kpi-count" class="kpi-value" style="color:#059669;">-</span>
+            <span class="kpi-unit">개 사업</span>
+          </div>
+          <div class="kpi-footer">
+            <span>새롭게 신설 및 도입된 사업</span>
+          </div>
+        </div>
+
+        <div class="kpi-card kpi-primary">
+          <div class="kpi-header">
+            <span class="kpi-title">신규 사업 총 예산 규모</span>
+            <span class="kpi-icon">💵</span>
+          </div>
+          <div class="kpi-value-row">
+            <span id="new-kpi-sum" class="kpi-value" style="color:#2563eb;">-</span>
+            <span class="kpi-unit">억원</span>
+          </div>
+          <div class="kpi-footer">
+            <span>2027년 신규 순편성 총액</span>
+          </div>
+        </div>
+
+        <div class="kpi-card kpi-accent">
+          <div class="kpi-header">
+            <span class="kpi-title">신규 사업 평균 예산</span>
+            <span class="kpi-icon">📊</span>
+          </div>
+          <div class="kpi-value-row">
+            <span id="new-kpi-avg" class="kpi-value" style="color:#7c3aed;">-</span>
+            <span class="kpi-unit">억원</span>
+          </div>
+          <div class="kpi-footer">
+            <span>사업당 평균 지원액</span>
+          </div>
+        </div>
+
+        <div class="kpi-card kpi-warning">
+          <div class="kpi-header">
+            <span class="kpi-title">최대 규모 신규 사업</span>
+            <span class="kpi-icon">🏆</span>
+          </div>
+          <div class="kpi-value-row" style="font-size:1.1rem; font-weight:800; color:#b45309; line-height:1.2;">
+            <span id="new-kpi-max">-</span>
+          </div>
+          <div class="kpi-footer">
+            <span>가장 많은 예산이 신규 편성된 사업</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- New Projects Charts Grid -->
+      <div class="dashboard-grid">
+        <div class="panel-card col-7">
+          <div class="panel-title-bar">
+            <h3 class="panel-title">신규 사업별 예산 규모 랭킹</h3>
+            <span class="panel-subtitle">단위: 억원 (규모 순 정렬)</span>
+          </div>
+          <div class="chart-wrapper">
+            <canvas id="chart-new-ranking"></canvas>
+          </div>
+        </div>
+
+        <div class="panel-card col-5">
+          <div class="panel-title-bar">
+            <h3 class="panel-title">분야별 신규 사업 예산 배분</h3>
+            <span class="panel-subtitle">신규 예산의 분야별 점유율</span>
+          </div>
+          <div class="chart-wrapper">
+            <canvas id="chart-new-sector-dist"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- New Projects Highlight Cards Grid -->
+      <div style="margin-top:1.5rem;">
+        <div class="panel-title-bar">
+          <h3 class="panel-title">🚀 2027년 신규 사업 심층 카드덱</h3>
+          <span class="panel-subtitle">보도자료 원문 근거 및 정책 추진 목적 포함</span>
+        </div>
+        <div id="new-projects-cards-grid" class="project-cards-grid"></div>
+      </div>
+    </div>
+
+    <!-- TAB 4: DATA EXPLORER & EXPORT -->
+    <div id="tab-panel-table" class="tab-content-panel" style="display:none;">
+      <!-- Table Controls Bar -->
+      <div class="table-controls-bar">
+        <div class="table-filter-group">
+          <input type="text" id="table-search" class="search-input" placeholder="🔍 사업명, 분야, 원문 키워드 검색...">
+          
+          <select id="table-sector-select" class="filter-select">
+            <option value="전체">모든 분야 보기</option>
+          </select>
+
+          <label class="toggle-label">
+            <input type="checkbox" id="table-only-new" style="width:16px; height:16px; cursor:pointer;">
+            <span>신규 사업만 보기</span>
+          </label>
+        </div>
+
+        <div style="display:flex; gap:0.5rem; align-items:center;">
+          <span id="table-count-label" style="font-size:0.85rem; color:#64748b; font-weight:600;">총 0건</span>
+          <button id="btn-export-excel" class="btn btn-outline btn-sm">
+            <span>📊</span>
+            <span>엑셀 (.xlsx) 저장</span>
+          </button>
+          <button id="btn-export-csv" class="btn btn-outline btn-sm">
+            <span>📄</span>
+            <span>CSV 저장</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Responsive Table Box -->
+      <div class="table-responsive-box">
+        <table class="analytics-table">
+          <thead>
+            <tr>
+              <th data-sort="no" class="text-center" style="width: 60px;">연번</th>
+              <th data-sort="sector" style="width: 190px;">분야 (중점영역)</th>
+              <th data-sort="name">세부 사업 / 주요 지표</th>
+              <th data-sort="unit" class="text-center" style="width: 70px;">단위</th>
+              <th data-sort="prev" class="text-right" style="width: 120px;">2026년 (A)</th>
+              <th data-sort="curr" class="text-right" style="width: 130px;">2027년 정부안 (B)</th>
+              <th data-sort="diff" class="text-right" style="width: 120px;">증감 (B-A)</th>
+              <th data-sort="rate" class="text-center" style="width: 100px;">증가율</th>
+              <th style="min-width: 300px;">핵심 내용 및 보도자료 박스 원문 근거</th>
+            </tr>
+          </thead>
+          <tbody id="table-tbody"></tbody>
+          <tfoot>
+            <tr>
+              <td colspan="4" class="text-center">합계 (현재 필터링 기준)</td>
+              <td id="table-sum-prev" class="text-right">-</td>
+              <td id="table-sum-curr" class="text-right" style="color:#1d4ed8;">-</td>
+              <td id="table-sum-diff" class="text-right" style="color:#059669;">-</td>
+              <td id="table-avg-rate" class="text-center">-</td>
+              <td>억원 단위 합계</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Upload Modal -->
+  <div id="upload-modal" class="modal-overlay">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>📁 엑셀 또는 CSV 파일 업로드</h3>
+        <button id="btn-close-modal" class="modal-close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size:0.875rem; color:#475569; margin-bottom:1rem;">
+          사용자님의 엑셀(<code>.xlsx</code>, <code>.xls</code>) 또는 <code>.csv</code> 파일을 드래그하여 놓거나 선택하면, 대시보드가 즉시 새로운 데이터로 자동 갱신됩니다.
+        </p>
+        
+        <div id="dropzone" class="dropzone-box">
+          <div class="dropzone-icon">📥</div>
+          <div class="dropzone-text">
+            <h4>파일을 여기로 드래그하거나 클릭하여 선택하세요</h4>
+            <p>지원 파일 형식: .xlsx, .xls, .csv</p>
+          </div>
+          <input type="file" id="file-input" accept=".xlsx, .xls, .csv" style="display:none;">
+        </div>
+
+        <div style="margin-top:1.25rem; font-size:0.8rem; background:#f8fafc; padding:0.85rem; border-radius:var(--radius-sm); border:1px solid #e2e8f0;">
+          <strong style="color:#1e3a8a; display:block; margin-bottom:0.35rem;">💡 지원되는 컬럼명 형식:</strong>
+          <span style="color:#64748b; line-height:1.6;">
+            • <code>연번</code> 또는 <code>No</code><br>
+            • <code>분야</code> 또는 <code>분야 (중점영역)</code><br>
+            • <code>세부 사업</code> 또는 <code>세부 사업 / 주요 지표</code><br>
+            • <code>구분/단위</code><br>
+            • <code>2026년 (A)</code> (전년도 예산)<br>
+            • <code>2027년 정부안 (B)</code> (당해연도 예산)<br>
+            • <code>증감 (B-A)</code><br>
+            • <code>증가율 (%)</code> (숫자 또는 '신규')<br>
+            • <code>핵심 내용 및 보도자료 박스 원문 근거</code> (비고/설명)
+          </span>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <a href="2027년_국방예산_샘플.xlsx" download="2027년_국방예산_샘플.xlsx" class="btn btn-outline btn-sm">샘플 엑셀 (.xlsx) 받기</a>
+        <a href="sample_data.csv" download="2027년_국방예산_샘플.csv" class="btn btn-outline btn-sm">샘플 CSV 받기</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div id="toast-container"></div>
+
+  <!-- Local Libraries for 100% Offline Support -->
+  <script src="xlsx.full.min.js"></script>
+  <script src="chart.umd.min.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
